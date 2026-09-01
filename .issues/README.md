@@ -14,6 +14,12 @@
 | [3](3-rename-command-to-refresh-an-issue-s-slug-after-a-title.edn) | rename command to refresh an issue's slug after a title change | feature | P3 |
 | [4](4-mtime-based-snapshot-cache-for-large-project-sets.edn) | mtime-based snapshot cache for large project sets | feature | P3 |
 
+### Review
+
+| ID | Title | Type | Priority |
+| --- | --- | --- | --- |
+| [7](7-simple-local-ui-to-see-issues-at-a-glance-from-any-project.md) | Simple local UI to see issues at a glance from any project dir | feature | P1 |
+
 ## Done
 
 _none_

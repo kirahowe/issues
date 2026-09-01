@@ -1,0 +1,11 @@
+{:id 7
+ :title "Simple local UI to see issues at a glance from any project dir"
+ :status :review
+ :type :feature
+ :priority :p1
+ :created "2026-09-01"
+ :updated "2026-09-01"
+ :tags #{}
+ :blocked-by #{}
+ :related #{}
+ :details "7-simple-local-ui-to-see-issues-at-a-glance-from-any-project.md"}

@@ -45,6 +45,8 @@ read the output programmatically; the human table is for Kira.
   means an error such as a duplicate id or a dangling `:blocked-by`.
 - Run `issues projects` when a project seems missing: it lists VCS roots
   without `.issues/` as candidates, and `issues init` inside one adopts it.
+- `issues ui` is for Kira: it blocks serving a browser board until Ctrl-C.
+  Do not run it unless asked, and then run it in the background.
 - Statuses: inbox, ready, in-progress, review, blocked, done, dropped.
   Types: feature, bug, chore, idea. Priorities: p0 (drop everything) to p3.
 
@@ -57,6 +59,7 @@ issues show | details | edit | start | review | done | drop <id>
 issues set <id> <status|type|priority|title|tags|blocked-by|related> <value>
 issues block <id> --on <n>    issues unblock <id> [--on <n>]
 issues next | inbox [--all]   issues index   issues doctor [--all]
+issues ui [--port n] [--no-open] [--all]
 issues projects | status [--all] | attention [--project id] | snapshot [--with-details] | config
 issues analyze [--kind k] [--threshold x] [--include-closed] [--no-save] [--file p]
 issues insights [--kind k] [--file p]

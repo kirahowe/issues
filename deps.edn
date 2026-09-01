@@ -6,7 +6,9 @@
         org.babashka/cli {:mvn/version "0.12.85"}
         babashka/fs {:mvn/version "0.5.34"}
         babashka/process {:mvn/version "0.6.25"}
-        cheshire/cheshire {:mvn/version "6.2.0"}}
+        cheshire/cheshire {:mvn/version "6.2.0"}
+        hiccup/hiccup {:mvn/version "2.0.0-RC1"}
+        http-kit/http-kit {:mvn/version "2.9.0-beta1"}}
 
  :aliases
  {:test {:extra-paths ["test"]}

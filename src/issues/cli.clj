@@ -17,7 +17,8 @@
             [issues.query :as query]
             [issues.render :as render]
             [issues.snapshot :as snapshot]
-            [issues.store :as store]))
+            [issues.store :as store]
+            [issues.ui :as ui]))
 
 ;;;; Results and errors
 
@@ -143,6 +144,7 @@
     "  inbox                         Requests still to be fleshed out"
     "  index                         Regenerate .issues/README.md"
     "  doctor                        Report problems (exit 2 when any errors)"
+    "  ui [--port n] [--no-open]     Serve a local board of this project's issues"
     ""
     "list, next, inbox and doctor accept --all to span every discovered project."
     ""
@@ -333,6 +335,21 @@
     (ok :insights (cond->> insights
                     kind (filterv #(= kind (:analyzer %)))))))
 
+(defn- cmd-ui [{:keys [opts]}]
+  (let [load (if (:all opts)
+               (let [cfg (load-cfg opts)]
+                 (fn [] (:projects (snapshot/build cfg {}))))
+               (let [scope (resolve-scope opts)]
+                 (fn [] [(project/read-project scope)])))
+        _ (load)
+        {:keys [url]} (ui/start! {:load load :port (or (:port opts) 4477)})]
+    (println "issues ui at" url "(Ctrl-C to stop)")
+    (flush)
+    (when-not (:no-open opts)
+      (ui/open-browser! url))
+    ;; Serve until interrupted; the process ends with the terminal's Ctrl-C.
+    @(promise)))
+
 (defn- cmd-unknown [{:keys [args]}]
   (if (seq args)
     (fail (str "unknown command " (pr-str (first args)) "\n\n" usage))
@@ -361,6 +378,9 @@
    {:cmds ["inbox"] :fn cmd-inbox}
    {:cmds ["index"] :fn cmd-index}
    {:cmds ["doctor"] :fn cmd-doctor}
+   {:cmds ["ui"] :fn cmd-ui
+    :spec {:port {:coerce :int :ref "<n>" :desc "Port (default 4477; 0 picks a free one)"}
+           :no-open {:coerce :boolean :desc "Do not open the browser"}}}
    {:cmds ["projects"] :fn cmd-projects}
    {:cmds ["status"] :fn cmd-status}
    {:cmds ["attention"] :fn cmd-attention}

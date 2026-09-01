@@ -27,6 +27,7 @@ issues list                          # open issues, sorted by lifecycle then pri
 issues next                          # highest-priority unblocked ready issue
 issues start 1 && issues review 1    # move it along; `done`, `drop`, `block`, `unblock` too
 issues show 1                        # metadata plus the details file, if any
+issues ui                            # local board in your browser; --all for every project
 ```
 
 Across projects (crawls `~/code/projects` two levels deep unless configured):
@@ -39,7 +40,10 @@ issues doctor --all      # every problem; exit 2 when any is an error
 issues snapshot --json   # the whole cross-project data value
 ```
 
-Every command takes `--json` or `--edn`.
+Every command takes `--json` or `--edn`. `issues ui` serves a read-only
+board on 127.0.0.1 (columns per status, one page per issue with its details
+rendered) and re-reads `.issues/` on every request, so CLI edits show up on
+refresh.
 
 ## How it works
 
@@ -105,4 +109,5 @@ bb issues <args>    # run the CLI from source
 Namespaces, bottom up: `issue` (pure parse/render/validate), `store` (one
 `.issues/` dir), `project` (locate, init, read), `config`, `discover`
 (crawl), `snapshot` (everything as one value), `query`, `render`, `analyze`,
-`cli`. This repo tracks its own follow-ups in `.issues/`.
+`markdown` and `ui` (the local board), `cli`. This repo tracks its own
+follow-ups in `.issues/`.
