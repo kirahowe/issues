@@ -19,8 +19,10 @@
     tmp))
 
 (defmacro with-temp
-  "Bind SYM to a fresh temp dir (or a fixture copy when NAME is given), run
-  BODY, and delete the dir afterwards."
+  "Bind SYM to a copy of the fixture NAME, or to a fresh empty temp dir when
+  NAME is nil, run BODY, and delete the dir afterwards. Always pass both
+  forms (`[tmp \"canonical\"]` or `[tmp nil]`): clj-kondo lints this macro
+  as `let`, so the binding vector must have an even count."
   [[sym name] & body]
   `(let [~sym ~(if name `(copy-fixture ~name) `(temp-dir))]
      (try
