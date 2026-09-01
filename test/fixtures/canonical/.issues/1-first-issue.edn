@@ -1,0 +1,11 @@
+{:id 1
+ :title "First issue"
+ :status :ready
+ :type :feature
+ :priority :p1
+ :created "2026-09-01"
+ :updated "2026-09-01"
+ :tags #{"alpha" "beta"}
+ :blocked-by #{}
+ :related #{}
+ :details "1-first-issue.md"}
