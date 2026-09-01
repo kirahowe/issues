@@ -1,0 +1,57 @@
+;;; Tasks for developing the `issues` CLI. The runtime needs only babashka:
+;;; every library the CLI uses (babashka.cli, babashka.fs, babashka.process,
+;;; cheshire) is a bb built-in, so there are no :deps here and a global
+;;; install never resolves anything. lint and fmt shell out to `clojure -M:…`
+;;; and need a JDK.
+{:paths ["src" "test"]
+ :min-bb-version "1.12.0"
+
+ ;; `bbin install .` reads this and publishes an `issues` shim on the PATH.
+ :bbin/bin {issues {:main-opts ["-m" "issues.cli"]}}
+
+ :tasks
+ {test
+  {:doc "Run the test suite under babashka (optionally: bb test issues.foo-test)"
+   :requires ([babashka.fs :as fs]
+              [clojure.string :as str]
+              [clojure.test :as t])
+   ;; bb.edn is EDN, so no #() or #"" literals here.
+   :task (let [all (->> (fs/glob "test" "**/*_test.clj")
+                        (map (fn [p]
+                               (-> (str (fs/relativize "test" p))
+                                   (str/replace (re-pattern "\\.clj$") "")
+                                   (str/replace "/" ".")
+                                   (str/replace "_" "-")
+                                   symbol)))
+                        sort)
+               nses (if (seq *command-line-args*)
+                      (map symbol *command-line-args*)
+                      all)]
+           (run! require nses)
+           (let [{:keys [fail error]} (apply t/run-tests nses)]
+             (System/exit (if (pos? (+ fail error)) 1 0))))}
+
+  lint
+  {:doc "Lint Clojure source with clj-kondo"
+   :task (clojure "-M:lint --lint src test bb.edn")}
+
+  fmt
+  {:doc "Format Clojure source with cljfmt"
+   :task (clojure "-M:format fix")}
+
+  fmt:check
+  {:doc "Check Clojure formatting with cljfmt"
+   :task (clojure "-M:format check")}
+
+  ci
+  {:doc "fmt:check, lint, then test"
+   :depends [fmt:check lint test]}
+
+  install
+  {:doc "Install the issues CLI globally with bbin"
+   :task (shell "bbin install .")}
+
+  issues
+  {:doc "Run the CLI from source: bb issues <command> ..."
+   :requires ([issues.cli :as cli])
+   :task (apply cli/-main *command-line-args*)}}}

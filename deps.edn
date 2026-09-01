@@ -1,0 +1,24 @@
+;;; deps.edn exists for JVM-side tooling (clj-kondo, cljfmt) and for using the
+;;; namespaces as a library from a JVM project. The CLI itself runs under
+;;; babashka via bb.edn and never touches this file.
+{:paths ["src"]
+ :deps {org.clojure/clojure {:mvn/version "1.12.5"}
+        org.babashka/cli {:mvn/version "0.12.85"}
+        babashka/fs {:mvn/version "0.5.34"}
+        babashka/process {:mvn/version "0.6.25"}
+        cheshire/cheshire {:mvn/version "6.2.0"}}
+
+ :aliases
+ {:test {:extra-paths ["test"]}
+
+  :format {:replace-deps {dev.weavejester/cljfmt {:mvn/version "0.16.5"}}
+           :main-opts ["-m" "cljfmt.main"]}
+
+  ;;; Current clj-kondo releases still carry Cheshire's Jackson 2.17 line.
+  ;;; Move that internally coherent core/dataformat set together inside :lint.
+  :lint {:replace-deps {clj-kondo/clj-kondo {:mvn/version "2026.05.25"}}
+         :override-deps
+         {com.fasterxml.jackson.core/jackson-core {:mvn/version "2.18.9"}
+          com.fasterxml.jackson.dataformat/jackson-dataformat-cbor {:mvn/version "2.18.9"}
+          com.fasterxml.jackson.dataformat/jackson-dataformat-smile {:mvn/version "2.18.9"}}
+         :main-opts ["-m" "clj-kondo.main"]}}}
