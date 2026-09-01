@@ -1,0 +1,10 @@
+{:id 4
+ :title "mtime-based snapshot cache for large project sets"
+ :status :inbox
+ :type :feature
+ :priority :p3
+ :created "2026-09-01"
+ :updated "2026-09-01"
+ :tags #{}
+ :blocked-by #{}
+ :related #{}}
