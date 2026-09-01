@@ -145,6 +145,13 @@
     ""
     "list, next, inbox and doctor accept --all to span every discovered project."
     ""
+    "Control-plane commands (crawl the configured roots):"
+    "  projects                      Discovered projects, candidates and shadowed copies"
+    "  status [--all]                Issue counts per status"
+    "  attention [--project id]      What needs Kira (review) and Claude (inbox, ready)"
+    "  snapshot [--with-details]     The whole cross-project data value (EDN by default)"
+    "  config                        Effective config and where it came from"
+    ""
     "Global flags:"
     (cli/format-opts {:spec global-spec})
     ""]))
@@ -264,6 +271,36 @@
         errors? (some #(= :error (:severity %)) problems)]
     (assoc (ok :doctor {:problems problems}) :exit (if errors? 2 0))))
 
+(defn- cmd-projects [{:keys [opts]}]
+  (let [snap (snapshot/build (load-cfg opts) {})]
+    (ok :projects
+        {:projects (mapv (fn [p]
+                           {:id (:id p) :path (:path p) :issues-dir (:issues-dir p)
+                            :counts (query/counts (:issues p))
+                            :problems (count (:problems p))})
+                         (:projects snap))
+         :candidates (:candidates snap)
+         :shadowed (:shadowed snap)
+         :warnings (:warnings snap)})))
+
+(defn- cmd-status [{:keys [opts]}]
+  (let [projects (if (:all opts)
+                   (:projects (snapshot/build (load-cfg opts) {}))
+                   [(project/read-project (resolve-scope opts))])]
+    (ok :counts (mapv (fn [p] {:project (:id p) :counts (query/counts (:issues p))})
+                      projects))))
+
+(defn- cmd-attention [{:keys [opts]}]
+  ;; Cross-project by default; --project narrows to one.
+  (let [{:keys [issues]} (scope-issues (if (:project opts) opts (assoc opts :all true)))]
+    (ok :attention (query/attention issues))))
+
+(defn- cmd-snapshot [{:keys [opts]}]
+  (ok :snapshot (snapshot/build (load-cfg opts) {:with-details? (:with-details opts)})))
+
+(defn- cmd-config [{:keys [opts]}]
+  (ok :config (config/load-config (or (:config opts) (config/config-path)))))
+
 (defn- cmd-unknown [{:keys [args]}]
   (if (seq args)
     (fail (str "unknown command " (pr-str (first args)) "\n\n" usage))
@@ -292,6 +329,11 @@
    {:cmds ["inbox"] :fn cmd-inbox}
    {:cmds ["index"] :fn cmd-index}
    {:cmds ["doctor"] :fn cmd-doctor}
+   {:cmds ["projects"] :fn cmd-projects}
+   {:cmds ["status"] :fn cmd-status}
+   {:cmds ["attention"] :fn cmd-attention}
+   {:cmds ["snapshot"] :fn cmd-snapshot :spec {:with-details {:coerce :boolean}}}
+   {:cmds ["config"] :fn cmd-config}
    {:cmds [] :fn cmd-unknown}])
 
 ;;;; Entry points

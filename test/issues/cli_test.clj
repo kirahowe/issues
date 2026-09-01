@@ -198,3 +198,50 @@
   (test-util/with-temp [tmp "canonical"]
     (let [result (run tmp "show" "1")]
       (is (map? (edn/read-string (render/emit result :edn)))))))
+
+(deftest control-plane-commands
+  (test-util/with-temp [tmp "roots"]
+    (let [cfg (str (fs/path tmp "config.edn"))
+          _ (spit cfg (pr-str {:roots [tmp]}))
+          _ (fs/create-dirs (fs/path tmp "beta" ".jj"))
+          cp (fn [& args] (cli/run (into ["--config" cfg "--edn"] args)))]
+      (testing "projects"
+        (let [{:keys [exit data]} (cp "projects")]
+          (is (= 0 exit))
+          (is (= ["alpha" "epsilon" "omega"] (map :id (:projects data))))
+          (is (= 2 (:total (:counts (first (:projects data))))))
+          (is (= ["beta"] (map :id (:candidates data))))
+          (is (= 2 (count (:shadowed data))))
+          (is (str/includes? (render/emit (assoc (cp "projects") :format :human) :human)
+                             "candidates"))))
+      (testing "status"
+        (is (= ["alpha" "epsilon" "omega"] (map :project (:data (cp "status" "--all")))))
+        (is (= [2] (map (comp :total :counts) (:data (cp "--project" "alpha" "status"))))))
+      (testing "attention spans projects by default and narrows with --project"
+        (let [{:keys [data]} (cp "attention")]
+          (is (= #{:kira :claude :blocked} (set (keys data))))
+          (is (= 3 (count (mapcat val data)))))
+        (is (= 2 (count (mapcat val (:data (cp "--project" "alpha" "attention")))))))
+      (testing "snapshot"
+        (let [{:keys [data] :as result} (cp "snapshot")]
+          (is (= #{:scanned-at :roots :projects :candidates :shadowed :warnings}
+                 (set (keys data))))
+          (is (not-any? #(contains? % :details-text) (mapcat :issues (:projects data))))
+          (is (str/starts-with? (render/emit result :human) "{")))
+        (is (every? #(contains? % :details-text)
+                    (mapcat :issues (:projects (:data (cp "snapshot" "--with-details")))))))
+      (testing "config"
+        (let [{:keys [data]} (cp "config")]
+          (is (= cfg (:path data)))
+          (is (true? (:exists? data)))
+          (is (= [tmp] (:roots (:config data)))))
+        (let [{:keys [data]} (cli/run ["--config" (str (fs/path tmp "nope.edn")) "--edn" "config"])]
+          (is (false? (:exists? data))))))))
+
+(deftest status-in-project-scope
+  (test-util/with-temp [tmp "canonical"]
+    (let [{:keys [data]} (run tmp "status")]
+      (is (= [{:project "canon" :total 3 :ready 1 :blocked 1 :done 1}]
+             (map #(select-keys (merge (:counts %) {:project (:project %)})
+                                [:project :total :ready :blocked :done])
+                  data))))))
