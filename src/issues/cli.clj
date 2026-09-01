@@ -9,6 +9,7 @@
             [babashka.fs :as fs]
             [babashka.process :as process]
             [clojure.string :as str]
+            [issues.analyze :as analyze]
             [issues.config :as config]
             [issues.discover :as discover]
             [issues.issue :as issue]
@@ -151,6 +152,10 @@
     "  attention [--project id]      What needs Kira (review) and Claude (inbox, ready)"
     "  snapshot [--with-details]     The whole cross-project data value (EDN by default)"
     "  config                        Effective config and where it came from"
+    "  analyze [--kind k] [--threshold x] [--include-closed] [--no-save] [--file p]"
+    "                                Run analyzers over the snapshot; save insights"
+    "  insights [--kind k] [--file p]"
+    "                                Show saved insights"
     ""
     "Global flags:"
     (cli/format-opts {:spec global-spec})
@@ -301,6 +306,33 @@
 (defn- cmd-config [{:keys [opts]}]
   (ok :config (config/load-config (or (:config opts) (config/config-path)))))
 
+(defn- analyzer-kind
+  [opts]
+  (when-let [k (:kind opts)]
+    (if (contains? (set analyze/kinds) k)
+      k
+      (fail (str "unknown analyzer " (name k) "; known: "
+                 (str/join ", " (map name analyze/kinds)))))))
+
+(defn- cmd-analyze [{:keys [opts]}]
+  (let [kind (analyzer-kind opts)
+        snap (snapshot/build (load-cfg opts) {})
+        aopts {:threshold (or (:threshold opts) 0.5)
+               :include-closed? (boolean (:include-closed opts))}
+        insights (if kind
+                   (analyze/analyze kind snap aopts)
+                   (analyze/run-all snap aopts))
+        path (or (:file opts) (analyze/insights-path))]
+    (when-not (:no-save opts)
+      (analyze/save-insights! path insights))
+    (ok :insights insights)))
+
+(defn- cmd-insights [{:keys [opts]}]
+  (let [kind (analyzer-kind opts)
+        insights (analyze/load-insights (or (:file opts) (analyze/insights-path)))]
+    (ok :insights (cond->> insights
+                    kind (filterv #(= kind (:analyzer %)))))))
+
 (defn- cmd-unknown [{:keys [args]}]
   (if (seq args)
     (fail (str "unknown command " (pr-str (first args)) "\n\n" usage))
@@ -334,6 +366,11 @@
    {:cmds ["attention"] :fn cmd-attention}
    {:cmds ["snapshot"] :fn cmd-snapshot :spec {:with-details {:coerce :boolean}}}
    {:cmds ["config"] :fn cmd-config}
+   {:cmds ["analyze"] :fn cmd-analyze
+    :spec {:kind {:coerce :keyword} :threshold {:coerce :double}
+           :include-closed {:coerce :boolean} :no-save {:coerce :boolean}
+           :file {:ref "<path>"}}}
+   {:cmds ["insights"] :fn cmd-insights :spec {:kind {:coerce :keyword} :file {:ref "<path>"}}}
    {:cmds [] :fn cmd-unknown}])
 
 ;;;; Entry points

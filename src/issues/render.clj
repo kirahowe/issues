@@ -152,6 +152,14 @@
   (str "config: " (:path data) (if (:exists? data) "" " (absent, using defaults)") "\n"
        (->edn (:config data))))
 
+(defmethod human :insights [{:keys [data]}]
+  (if (empty? data)
+    "no insights\n"
+    (table ["KIND" "SCORE" "ISSUES" "NOTE"]
+           (map (fn [{:keys [kind score issues note]}]
+                  [(kw-name kind) score (str/join " " issues) note])
+                data))))
+
 (defn emit
   "RESULT as a string in FORMAT (`:human`, `:edn`, or `:json`)."
   [result format]
