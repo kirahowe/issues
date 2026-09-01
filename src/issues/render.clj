@@ -90,6 +90,9 @@
          (when-let [text (:details-text issue)]
            (str "\n" text)))))
 
+(defmethod human :updated [{:keys [data]}]
+  (str (or (:ref data) (:id data)) "  " (kw-name (:status data)) "  " (:title data) "\n"))
+
 (defmethod human :next [{:keys [data]}]
   (if-let [issue (:issue data)]
     (issue-table [issue] (:all? data))
