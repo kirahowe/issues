@@ -14,6 +14,16 @@
 | [3](3-rename-command-to-refresh-an-issue-s-slug-after-a-title.edn) | rename command to refresh an issue's slug after a title change | feature | P3 |
 | [4](4-mtime-based-snapshot-cache-for-large-project-sets.edn) | mtime-based snapshot cache for large project sets | feature | P3 |
 
+### Ready
+
+| ID | Title | Type | Priority |
+| --- | --- | --- | --- |
+| [8](8-protect-issue-files-from-corruption-and-concurrent-edits.md) | Protect issue files from corruption and concurrent edits | bug | P0 |
+| [9](9-make-doctor-reliable-on-broken-issue-data.md) | Make doctor reliable on broken issue data | bug | P1 |
+| [10](10-fix-cli-help-coercion-output-formats-and-error-reporting.md) | Fix CLI help, coercion, output formats, and error reporting | bug | P1 |
+| [11](11-constrain-details-paths-and-markdown-link-destinations.md) | Constrain details paths and Markdown link destinations | bug | P1 |
+| [12](12-prepare-the-public-alpha-release-and-jvm-library-contract.md) | Prepare the public alpha release and JVM library contract | chore | P1 |
+
 ### Review
 
 | ID | Title | Type | Priority |

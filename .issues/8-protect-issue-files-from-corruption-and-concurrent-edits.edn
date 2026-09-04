@@ -1,0 +1,11 @@
+{:id 8
+ :title "Protect issue files from corruption and concurrent edits"
+ :status :ready
+ :type :bug
+ :priority :p0
+ :created "2026-09-04"
+ :updated "2026-09-04"
+ :tags #{"alpha" "data-integrity" "storage"}
+ :blocked-by #{}
+ :related #{"issues#2" "issues#9"}
+ :details "8-protect-issue-files-from-corruption-and-concurrent-edits.md"}

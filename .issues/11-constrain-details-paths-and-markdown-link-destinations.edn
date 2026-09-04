@@ -1,0 +1,11 @@
+{:id 11
+ :title "Constrain details paths and Markdown link destinations"
+ :status :ready
+ :type :bug
+ :priority :p1
+ :created "2026-09-04"
+ :updated "2026-09-04"
+ :tags #{"alpha" "security" "storage" "ui"}
+ :blocked-by #{}
+ :related #{"issues#7" "issues#8"}
+ :details "11-constrain-details-paths-and-markdown-link-destinations.md"}

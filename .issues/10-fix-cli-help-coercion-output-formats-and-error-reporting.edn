@@ -1,0 +1,11 @@
+{:id 10
+ :title "Fix CLI help, coercion, output formats, and error reporting"
+ :status :ready
+ :type :bug
+ :priority :p1
+ :created "2026-09-04"
+ :updated "2026-09-04"
+ :tags #{"alpha" "automation" "cli"}
+ :blocked-by #{}
+ :related #{"issues#9"}
+ :details "10-fix-cli-help-coercion-output-formats-and-error-reporting.md"}

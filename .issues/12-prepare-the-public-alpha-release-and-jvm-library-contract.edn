@@ -1,0 +1,11 @@
+{:id 12
+ :title "Prepare the public alpha release and JVM library contract"
+ :status :ready
+ :type :chore
+ :priority :p1
+ :created "2026-09-04"
+ :updated "2026-09-04"
+ :tags #{"alpha" "docs" "jvm" "release"}
+ :blocked-by #{}
+ :related #{"issues#10" "issues#11" "issues#8" "issues#9"}
+ :details "12-prepare-the-public-alpha-release-and-jvm-library-contract.md"}
