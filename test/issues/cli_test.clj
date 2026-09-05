@@ -245,3 +245,28 @@
              (map #(select-keys (merge (:counts %) {:project (:project %)})
                                 [:project :total :ready :blocked :done])
                   data))))))
+
+(deftest ui-scope
+  (test-util/with-temp [tmp "roots"]
+    (let [cfg-file (str (fs/path tmp "config.edn"))
+          _ (spit cfg-file (pr-str {:roots [(str (fs/path tmp "epsilon"))]}))
+          alpha (str (fs/path tmp "alpha"))
+          load-ids (fn [opts] (mapv :id ((#'cli/ui-loader (assoc opts :config cfg-file)))))]
+      (testing "default: every project at or below --dir"
+        (is (= ["alpha" "epsilon" "omega"] (load-ids {:dir tmp}))))
+      (testing "inside a project: that project's root is the tree root"
+        (fs/create-dirs (str (fs/path alpha "src")))
+        (is (= ["alpha"] (load-ids {:dir (str (fs/path alpha "src"))}))))
+      (testing "nested projects are included unless --local"
+        (fs/create-dirs (str (fs/path alpha "inner" ".issues")))
+        (is (= ["alpha" "inner"] (load-ids {:dir alpha})))
+        (is (= ["alpha"] (load-ids {:dir alpha :local true}))))
+      (testing "--project and --all resolve through the configured roots"
+        (is (= ["epsilon"] (load-ids {:dir tmp :project "epsilon"})))
+        (is (= ["epsilon"] (load-ids {:dir tmp :all true}))))
+      (testing "a tree with no projects fails up front"
+        (let [plain (str (fs/path tmp "plain"))
+              ex (try (#'cli/ui-loader {:dir plain :config cfg-file})
+                      (catch clojure.lang.ExceptionInfo e e))]
+          (is (= 1 (:issues/exit (ex-data ex))))
+          (is (str/includes? (ex-message ex) plain)))))))

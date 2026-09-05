@@ -121,3 +121,32 @@
 (deftest dedupe-shortest-path-wins
   (let [result (discover/dedupe [{:id "x" :path "/b/long/x"} {:id "x" :path "/a/x"}])]
     (is (= "/a/x" (:path (first (:projects result)))))))
+
+(deftest crawl-nested-descends-below-a-project-root
+  (test-util/with-temp [tmp "roots"]
+    (let [alpha (str (fs/path tmp "alpha"))
+          hits (discover/crawl alpha {:max-depth 2 :skip-dirs #{} :nested? true})]
+      (is (= [[:project alpha 0]
+              [:project (str (fs/path alpha "workspaces" "feat-x")) 2]]
+             (map (juxt :kind :path :depth) hits))))))
+
+(deftest discover-nested-finds-projects-inside-projects
+  (test-util/with-temp [tmp "roots"]
+    (fs/create-dirs (str (fs/path tmp "alpha" "inner" ".issues")))
+    (let [cfg (config/normalize {:roots [tmp]})]
+      (is (= ["alpha" "epsilon" "omega"]
+             (map :id (:projects (discover/discover cfg)))))
+      (is (= ["alpha" "epsilon" "inner" "omega"]
+             (map :id (:projects (discover/discover cfg {:nested? true}))))))))
+
+(deftest discover-nested-still-skips-and-dedupes-workspace-copies
+  (test-util/with-temp [tmp "roots"]
+    (let [alpha (str (fs/path tmp "alpha"))
+          copy (str (fs/path alpha "workspaces" "feat-x"))
+          skipping (discover/discover (config/normalize {:roots [alpha]}) {:nested? true})
+          unskipped (discover/discover (config/normalize {:roots [alpha] :skip-dirs #{}})
+                                       {:nested? true})]
+      (is (= [alpha] (map :path (:projects skipping))))
+      (is (= [] (:shadowed skipping)))
+      (is (= [alpha] (map :path (:projects unskipped))))
+      (is (= [{:id "alpha" :path copy :winner alpha}] (:shadowed unskipped))))))

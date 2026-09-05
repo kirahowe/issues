@@ -40,29 +40,30 @@
 (defn crawl
   "Depth-first walk from ROOT (depth 0), returning a vector of hits in
   visit order: `{:kind :project :path :issues-dir :depth}` for a directory
-  containing `.issues` (never descended into), or `{:kind :vcs-root :path
-  :vcs :depth}` for a version-controlled directory (still descended into,
-  up to `:max-depth`). A directory that doesn't exist, or can't be listed,
-  contributes nothing. OPTS: `:max-depth`, `:skip-dirs`."
-  [root {:keys [max-depth skip-dirs]}]
-  (letfn [(walk [dir depth]
+  containing `.issues`, or `{:kind :vcs-root :path :vcs :depth}` for a
+  version-controlled directory. Children are visited down to `:max-depth`,
+  except a project's, which are skipped unless `:nested?` is true. A
+  directory that doesn't exist, or can't be listed, contributes nothing.
+  OPTS: `:max-depth`, `:skip-dirs`, `:nested?`."
+  [root {:keys [max-depth skip-dirs nested?]}]
+  (letfn [(children [dir depth]
+            (when (< depth max-depth)
+              (mapcat #(walk % (inc depth)) (child-dirs dir skip-dirs))))
+          (walk [dir depth]
             (let [dir-str (str (fs/absolutize dir))]
               (cond
                 (not (fs/directory? dir-str)) []
 
                 (project/issues-dir? dir-str)
-                [{:kind :project :path dir-str
-                  :issues-dir (str (fs/path dir-str ".issues")) :depth depth}]
+                (into [{:kind :project :path dir-str
+                        :issues-dir (str (fs/path dir-str ".issues")) :depth depth}]
+                      (when nested? (children dir-str depth)))
 
                 :else
-                (let [vcs (vcs-root dir-str)
-                      self-hit (when vcs
-                                 [{:kind :vcs-root :path dir-str :vcs vcs :depth depth}])
-                      child-hits (when (< depth max-depth)
-                                   (mapcat #(walk % (inc depth))
-                                           (child-dirs dir-str skip-dirs)))]
-                  (vec (concat self-hit child-hits))))))]
-    (vec (walk root 0))))
+                (let [vcs (vcs-root dir-str)]
+                  (into (if vcs [{:kind :vcs-root :path dir-str :vcs vcs :depth depth}] [])
+                        (children dir-str depth))))))]
+    (walk root 0)))
 
 (defn dedupe
   "Group PROJECTS (maps with at least `:id` and `:path`) by `:id`. The
@@ -89,31 +90,33 @@
   every `:project` hit (id via `project/project-id`); `:candidates`
   (sorted by `:path`) are `{:id :path :vcs}` for every `:vcs-root` hit,
   `:id` being the directory name. `:warnings` names any configured root
-  that doesn't exist. Deterministic across runs."
-  [config]
-  (let [{:keys [roots max-depth skip-dirs]} config
-        opts {:max-depth max-depth :skip-dirs skip-dirs}
-        per-root (map (fn [root]
-                        (if (fs/exists? root)
-                          {:hits (crawl root opts)}
-                          {:warning (str "root " root " does not exist")}))
-                      roots)
-        warnings (vec (keep :warning per-root))
-        hits (mapcat :hits per-root)
-        project-hits (filter #(= :project (:kind %)) hits)
-        vcs-hits (filter #(= :vcs-root (:kind %)) hits)
-        projects-in (map (fn [{:keys [path issues-dir]}]
-                           {:id (project/project-id issues-dir)
-                            :path path
-                            :issues-dir issues-dir})
-                         project-hits)
-        {:keys [projects shadowed]} (dedupe projects-in)
-        candidates (->> vcs-hits
-                        (map (fn [{:keys [path vcs]}]
-                               {:id (str (fs/file-name path)) :path path :vcs vcs}))
-                        (sort-by :path)
-                        vec)]
-    {:projects projects :shadowed shadowed :candidates candidates :warnings warnings}))
+  that doesn't exist. Deterministic across runs. OPTS: `:nested?` also
+  finds projects nested inside other projects (see `crawl`)."
+  ([config] (discover config {}))
+  ([config {:keys [nested?]}]
+   (let [{:keys [roots max-depth skip-dirs]} config
+         opts {:max-depth max-depth :skip-dirs skip-dirs :nested? nested?}
+         per-root (map (fn [root]
+                         (if (fs/exists? root)
+                           {:hits (crawl root opts)}
+                           {:warning (str "root " root " does not exist")}))
+                       roots)
+         warnings (vec (keep :warning per-root))
+         hits (mapcat :hits per-root)
+         project-hits (filter #(= :project (:kind %)) hits)
+         vcs-hits (filter #(= :vcs-root (:kind %)) hits)
+         projects-in (map (fn [{:keys [path issues-dir]}]
+                            {:id (project/project-id issues-dir)
+                             :path path
+                             :issues-dir issues-dir})
+                          project-hits)
+         {:keys [projects shadowed]} (dedupe projects-in)
+         candidates (->> vcs-hits
+                         (map (fn [{:keys [path vcs]}]
+                                {:id (str (fs/file-name path)) :path path :vcs vcs}))
+                         (sort-by :path)
+                         vec)]
+     {:projects projects :shadowed shadowed :candidates candidates :warnings warnings})))
 
 (defn find-project
   "The project from `(discover config)` whose `:id` is ID. Throws

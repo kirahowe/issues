@@ -27,7 +27,7 @@ issues list                          # open issues, sorted by lifecycle then pri
 issues next                          # highest-priority unblocked ready issue
 issues start 1 && issues review 1    # move it along; `done`, `drop`, `block`, `unblock` too
 issues show 1                        # metadata plus the details file, if any
-issues ui                            # local board in your browser; --all for every project
+issues ui                            # browser board of every project at or below here
 ```
 
 Across projects (crawls `~/code/projects` two levels deep unless configured):
@@ -43,7 +43,11 @@ issues snapshot --json   # the whole cross-project data value
 Every command takes `--json` or `--edn`. `issues ui` serves a read-only
 board on 127.0.0.1 (columns per status, one page per issue with its details
 rendered) and re-reads `.issues/` on every request, so CLI edits show up on
-refresh.
+refresh. By default it shows every project at or below the current directory
+(starting from the enclosing project's root when run inside one), nested
+projects included, crawling as deep as the configured `:max-depth`.
+`--local` narrows to the one project at or above the directory, `--project
+<id>` picks a discovered project, and `--all` spans every configured root.
 
 ## How it works
 

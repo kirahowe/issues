@@ -6,7 +6,8 @@ Global flags being accepted does not mean every command honors them alike.
 
 | Commands | Actual scope |
 | --- | --- |
-| `list`, `inbox`, `next`, `status`, `doctor`, `ui` | Local by default; `--project` selects a discovered project; `--all` selects all and takes precedence |
+| `list`, `inbox`, `next`, `status`, `doctor` | Local by default; `--project` selects a discovered project; `--all` selects all and takes precedence |
+| `ui` | Every project at or below `--dir`/cwd by default, nested ones included; `--local` or `--project` selects one; `--all` selects all and takes precedence |
 | `show`, `details`, `edit`, `add`, `set`, `start`, `review`, `done`, `drop`, `block`, `unblock`, `index` | One project, from `--project` or nearest `.issues/` above `--dir`/cwd; `--all` does not fan out mutations |
 | `init` | Exactly `--dir`/cwd; does not use `--project` to select a root |
 | `attention` | All by default; `--project` narrows unless `--all` is also present; `--dir` alone does not narrow |
@@ -101,6 +102,12 @@ stale; these commands do not mutate issue metadata.
 
 Run `issues ui` when the user wants the browser board. It is read-only,
 binds to 127.0.0.1, and re-reads files on each request. Use a managed
-background process because it blocks until stopped. `--all` shows all
-projects, `--no-open` suppresses browser launch, and `--port 0` chooses a
-free port (default is 4477). Report the printed URL and how to stop it.
+background process because it blocks until stopped. By default it shows
+every project at or below `--dir`/cwd (starting from the enclosing project
+root when inside one), including projects nested inside other projects,
+which the control-plane crawl does not descend into; the configured
+`:max-depth` and `:skip-dirs` still bound the walk. `--local` shows only the
+project at or above `--dir`, `--project <id>` one discovered project, and
+`--all` every configured root. `--no-open` suppresses browser launch, and
+`--port 0` chooses a free port (default is 4477). Report the printed URL and
+how to stop it.

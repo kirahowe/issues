@@ -144,9 +144,10 @@
     "  inbox                         Requests still to be fleshed out"
     "  index                         Regenerate .issues/README.md"
     "  doctor                        Report problems (exit 2 when any errors)"
-    "  ui [--port n] [--no-open]     Serve a local board of this project's issues"
+    "  ui [--port n] [--no-open]     Serve a local board of every project at or below here"
     ""
-    "list, next, inbox and doctor accept --all to span every discovered project."
+    "list, next, inbox and doctor accept --all to span every discovered project;"
+    "ui does too, and --local to show only the project at or above --dir."
     ""
     "Control-plane commands (crawl the configured roots):"
     "  projects                      Discovered projects, candidates and shadowed copies"
@@ -335,12 +336,43 @@
     (ok :insights (cond->> insights
                     kind (filterv #(= kind (:analyzer %)))))))
 
+(defn- tree-root
+  "Where `issues ui` starts crawling by default: the nearest project root
+  at or above `--dir` (default cwd) when inside one, else that directory
+  itself."
+  [opts]
+  (let [start (start-dir opts)]
+    (or (:root (project/locate start)) start)))
+
+(defn- ui-loader
+  "A no-arg function returning the projects `issues ui` serves, re-read on
+  every call. `--all`: every project under the configured roots.
+  `--project` or `--local`: exactly one, per `resolve-scope`. Otherwise
+  every project in the tree under `tree-root`, nested ones included, the
+  config's `:max-depth` and `:skip-dirs` bounding the crawl; fails when
+  that finds nothing."
+  [opts]
+  (cond
+    (:all opts)
+    (let [cfg (load-cfg opts)]
+      (fn [] (:projects (snapshot/build cfg {}))))
+
+    (or (:project opts) (:local opts))
+    (let [scope (resolve-scope opts)]
+      (fn [] [(project/read-project scope)]))
+
+    :else
+    (let [root (tree-root opts)
+          cfg (assoc (load-cfg opts) :roots [root])
+          load (fn [] (mapv project/read-project
+                            (:projects (discover/discover cfg {:nested? true}))))]
+      (when (empty? (load))
+        (fail (str "no .issues projects at or below " root
+                   "\nrun `issues init` there to create one")))
+      load)))
+
 (defn- cmd-ui [{:keys [opts]}]
-  (let [load (if (:all opts)
-               (let [cfg (load-cfg opts)]
-                 (fn [] (:projects (snapshot/build cfg {}))))
-               (let [scope (resolve-scope opts)]
-                 (fn [] [(project/read-project scope)])))
+  (let [load (ui-loader opts)
         _ (load)
         {:keys [url]} (ui/start! {:load load :port (or (:port opts) 4477)})]
     (println "issues ui at" url "(Ctrl-C to stop)")
@@ -380,7 +412,9 @@
    {:cmds ["doctor"] :fn cmd-doctor}
    {:cmds ["ui"] :fn cmd-ui
     :spec {:port {:coerce :int :ref "<n>" :desc "Port (default 4477; 0 picks a free one)"}
-           :no-open {:coerce :boolean :desc "Do not open the browser"}}}
+           :no-open {:coerce :boolean :desc "Do not open the browser"}
+           :local {:coerce :boolean
+                   :desc "Only the project at or above --dir, ignoring nested ones"}}}
    {:cmds ["projects"] :fn cmd-projects}
    {:cmds ["status"] :fn cmd-status}
    {:cmds ["attention"] :fn cmd-attention}
