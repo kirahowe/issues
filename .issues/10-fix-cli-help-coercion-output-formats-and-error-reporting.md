@@ -9,6 +9,11 @@ The alpha review reproduced four CLI contract failures:
   placing `--json` before `add` works.
 - `issues set 1 blocked-by 2` crashes because the parser coerces the value to a
   number before string-based field coercion. Numeric tags fail similarly.
+  `issues set 28 related '27'`, run in email-helper on 2026-10-06, crashed the
+  same way with `java.lang.Long cannot be cast to java.lang.CharSequence`. The
+  trace points at the help-flag check in `run` (`cli.clj:447`), which calls
+  `str/starts-with?` on arguments that are already numbers, so the crash comes
+  before `set` sees the value.
 - Running an unknown command, or `show` outside a project, can exit 1 with both
   stdout and stderr empty. `-main` flushes stdout after printing the error to
   stderr, then exits.
@@ -23,7 +28,7 @@ CLI tests call `run` in process and do not exercise stream flushing at exit.
 - [ ] JSON and EDN output selection works consistently in supported global-flag
   positions, including after an add title, and matches the documented contract.
 - [ ] Treat `set` values as strings until field-specific coercion. Cover a single
-  numeric blocker, numeric title/tag text, comma-separated sets, and empty sets.
+  numeric blocker, a single numeric related link, numeric title/tag text, comma-separated sets, and empty sets.
 - [ ] Invalid arguments produce a useful diagnostic and nonzero exit instead of
   an incidental type exception.
 - [ ] Error output is flushed to stderr before exit; success data remains on
