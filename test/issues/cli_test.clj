@@ -1,5 +1,6 @@
 (ns issues.cli-test
   (:require [babashka.fs :as fs]
+            [babashka.process :as process]
             [cheshire.core :as json]
             [clojure.edn :as edn]
             [clojure.string :as str]
@@ -119,6 +120,14 @@
     (is (= :review (:status (:data (run tmp "review" "1")))))
     (is (= :done (:status (:data (run tmp "done" "1")))))
     (is (= :dropped (:status (:data (run tmp "drop" "1")))))))
+
+(deftest errors-reach-stderr-from-a-real-process
+  (test-util/with-temp [tmp "canonical"]
+    (let [{:keys [exit out err]} (process/sh "bb" "--config" "bb.edn" "issues"
+                                             "--dir" tmp "show" "99")]
+      (is (= 1 exit))
+      (is (= "" out))
+      (is (str/includes? err "no issue 99 in canon")))))
 
 (deftest block-and-unblock
   (test-util/with-temp [tmp "canonical"]

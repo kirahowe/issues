@@ -48,3 +48,8 @@ in-process result-map API while testing the process entry point separately.
 ## Log
 
 - 2026-09-04: Filed from the alpha readiness review; implementation not started.
+- 2026-10-19: `-main` now flushes stderr before exiting, so error messages
+  reach the terminal (found while adding the review gate, issues#14). The first
+  subprocess test, `cli-test/errors-reach-stderr-from-a-real-process`, covers
+  one failed command. Structured-error docs and the wider subprocess suite are
+  still open.

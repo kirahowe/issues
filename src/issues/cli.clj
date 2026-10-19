@@ -488,5 +488,7 @@
     (if (zero? exit)
       (print text)
       (binding [*out* *err*] (print text)))
+    ;; System/exit skips the writers' own flushing, so flush both.
     (flush)
+    (binding [*out* *err*] (flush))
     (System/exit exit)))
