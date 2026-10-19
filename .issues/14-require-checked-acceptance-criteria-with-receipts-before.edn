@@ -1,0 +1,11 @@
+{:id 14
+ :title "Require checked acceptance criteria with receipts before review"
+ :status :review
+ :type :feature
+ :priority :p2
+ :created "2026-10-19"
+ :updated "2026-10-19"
+ :tags #{"agents" "review"}
+ :blocked-by #{}
+ :related #{}
+ :details "14-require-checked-acceptance-criteria-with-receipts-before.md"}

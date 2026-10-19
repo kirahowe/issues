@@ -51,8 +51,9 @@ projects included, crawling as deep as the configured `:max-depth`.
 <id>` picks a discovered project, and `--all` spans every configured root.
 
 `issues tui` opens a terminal inbox of everything in `review` across the
-configured roots, or one project's with `--project <id>`. Open an issue to
-read its details, then press `a` to approve it (`done`), `c` to request
+configured roots, or one project's with `--project <id>`, with each issue's
+receipted criteria count (`3/4!` when something is unchecked or has no
+receipt). Open an issue to read its details, then press `a` to approve it (`done`), `c` to request
 changes (back to `ready`, where `next` and the agent pick it up again) or
 `r` to reject it (`dropped`). Each verdict asks for a note: optional for
 approve and reject, required for changes. A note goes into the details
@@ -85,7 +86,11 @@ cosmetic. Cross-project references look like `secrets#12`.
 
 The lifecycle is `inbox` (raw request) → `ready` (fleshed out) →
 `in-progress` → `review` (implemented, awaiting the human) → `done`, with
-`blocked` and `dropped` on the side. Issue edits ride along with the code in
+`blocked` and `dropped` on the side. An issue reaches `review` only once every
+item under its details' `## Acceptance criteria` is checked off with at
+least one nested `- Receipt:` line, the evidence for the claim (a command
+and its result, a commit, a test). `issues review` lists what's missing,
+and `--force` skips the check. Issue edits ride along with the code in
 the same commits, so an issue's history is the repo's history.
 
 `.issues/README.md` is generated (first line is a marker) so GitHub renders an

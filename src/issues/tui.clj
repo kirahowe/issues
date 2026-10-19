@@ -9,6 +9,7 @@
   with plain ANSI escapes, since babashka bundles no curses library."
   (:require [babashka.process :as process]
             [clojure.string :as str]
+            [issues.criteria :as criteria]
             [issues.issue :as issue]
             [issues.query :as query]
             [issues.review :as review]
@@ -135,6 +136,16 @@
 
 (defn- pri [i] (some-> (:priority i) name str/upper-case))
 
+(defn criteria-cell
+  "ISSUE's acceptance criteria as `receipted/total`, marked `!` when any
+  criterion is unchecked or lacks a receipt; `-` when it lists none."
+  [issue]
+  (let [{:keys [total receipted]} (criteria/summary (criteria/parse (:details-text issue)))]
+    (cond
+      (zero? total) "-"
+      (= total receipted) (str receipted "/" total)
+      :else (str receipted "/" total "!"))))
+
 (defn- list-lines
   [{:keys [issues sel]} w h]
   (if (empty? issues)
@@ -144,7 +155,8 @@
       (for [[i x] (map-indexed vector issues)
             :when (<= top i (+ top h -1))
             :let [line (fit (str " " (fit (:ref x) ref-w) "  " (fit (pri x) 2) "  "
-                                 (fit (name (:type x)) 7) "  " (:updated x) "  " (:title x))
+                                 (fit (name (:type x)) 7) "  " (fit (criteria-cell x) 5) "  "
+                                 (:updated x) "  " (:title x))
                             w)]]
         (if (= i sel) (inverse line) line)))))
 
@@ -159,6 +171,7 @@
       (meta "status" (name (:status x)))
       (meta "type" (str (name (:type x)) "  " (pri x)))
       (meta "updated" (:updated x))
+      (meta "criteria" (str (criteria-cell x) "  receipted"))
       (meta "tags" (set-str (:tags x)))
       (meta "related" (set-str (:related x)))
       ""]

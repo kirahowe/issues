@@ -73,26 +73,48 @@ for dependencies. `next` is the actionable-work selector.
    details file and obtain its path. Edit that Markdown directly, preserving
    existing context. Use Context, Acceptance criteria, Plan, and Log as
    useful; record concrete success conditions and unresolved decisions.
+   Write each acceptance criterion as a `- [ ]` item that a receipt can
+   later prove, since `review` checks them.
    Prefer this to `issues edit`, which launches an interactive editor.
    Set justified metadata with `issues set 12 type bug`,
    `issues set 12 priority p1`, or `issues set 12 tags 'cli,ux'`.
    Move to `ready` with `issues set 12 status ready` when sufficiently clear.
 3. **Implement authorized work.** Inspect the selected issue and its blockers,
    then `issues start 12`. `next` only recommends; it does not claim work.
-   Status commands do not enforce prerequisites or ownership. Match the
-   actual state, and do not reset an already active issue unnecessarily.
+   Status commands other than `review` do not enforce prerequisites or
+   ownership. Match the actual state, and do not reset an already active
+   issue unnecessarily.
    A ready issue may be one the user sent back from review: read the last
    `changes requested:` line in its details `## Log` and address it.
-4. **Verify and hand back.** Update the details with results, relevant checks,
-   and remaining limitations, then run `issues doctor --json` for the target
-   project. Resolve problems introduced by the work. Use `issues review 12`
-   once implemented and verified. Keep issue changes with the code they
-   describe when committing, following local VCS rules. Human acceptance is
-   the normal boundary for `done`; use `issues done 12` when the user accepts
-   or explicitly requests closure. The user may give verdicts in `issues tui`,
-   which moves an issue to done, back to ready, or to dropped and logs any
-   note in its details. It needs a terminal; do not run it yourself. Use `drop` for intentionally abandoned
-   work within the request, with a reason in the details.
+4. **Verify and hand back.** Check off each acceptance criterion you met
+   and put the evidence under it as one or more nested `- Receipt:` lines.
+   A receipt is something the user can check without redoing the work: the
+   command you ran and what it reported, a commit id, a test name, or a
+   `file:line`. Leave a criterion unchecked rather than check it without a
+   receipt. For example:
+
+   ```markdown
+   - [x] Rejects an empty title
+     - Receipt: `bb test issues.cli-test` passed, 23 tests, 0 failures
+     - Receipt: the check in `cmd-add`, src/issues/cli.clj, commit abc1234
+   - [ ] Works on Windows
+   ```
+
+   Add results and remaining limitations to the Log, then run
+   `issues doctor --json` for the target project and resolve problems the
+   work introduced. `issues review 12` refuses while any criterion is
+   unchecked, lacks a receipt, or there are no criteria at all, and lists
+   the gaps. Fix them; use `--force` only when the user has agreed to a
+   partial hand-off, and say in the Log what is missing and why. Keep
+   issue changes with the code they describe when committing, following
+   local VCS rules.
+
+   Human acceptance is the normal boundary for `done`; use `issues done 12`
+   when the user accepts or explicitly requests closure. The user may give
+   verdicts in `issues tui`, which moves an issue to done, back to ready,
+   or to dropped and logs any note in its details. It needs a terminal; do
+   not run it yourself. Use `drop` for intentionally abandoned work within
+   the request, with a reason in the details.
 
 Metadata changes through `set` and lifecycle commands bump `updated` and
 regenerate the index. Creating/editing details alone does not bump `updated`.

@@ -117,9 +117,37 @@
 (deftest status-sugar
   (test-util/with-temp [tmp "canonical"]
     (is (= :in-progress (:status (:data (run tmp "start" "1")))))
-    (is (= :review (:status (:data (run tmp "review" "1")))))
+    (is (= :review (:status (:data (run tmp "review" "1" "--force")))))
     (is (= :done (:status (:data (run tmp "done" "1")))))
     (is (= :dropped (:status (:data (run tmp "drop" "1")))))))
+
+(deftest review-needs-receipts
+  (test-util/with-temp [tmp "canonical"]
+    (let [details (str (fs/path (issues-dir tmp) "1-first-issue.md"))
+          criteria! #(spit details (str "# First issue\n\n## Acceptance criteria\n\n" %
+                                        "\n## Log\n"))]
+      (testing "the template's empty checklist is not enough"
+        (let [{:keys [exit data]} (run tmp "review" "1")]
+          (is (= 1 exit))
+          (is (str/includes? data "canon#1 is not ready for review"))
+          (is (str/includes? data "no acceptance criteria listed"))
+          (is (str/includes? data details))))
+      (testing "every gap is listed"
+        (criteria! "- [ ] Parses input\n- [x] Prints output\n")
+        (let [{:keys [exit data]} (run tmp "review" "1")]
+          (is (= 1 exit))
+          (is (str/includes? data "unchecked: Parses input"))
+          (is (str/includes? data "no receipt: Prints output"))))
+      (testing "set status review is gated the same way"
+        (is (= 1 (:exit (run tmp "set" "1" "status" "review"))))
+        (is (= :ready (:status (store/find-issue (issues-dir tmp) 1)))))
+      (testing "an issue with no details at all"
+        (is (str/includes? (:data (run tmp "review" "3")) "issues details 3")))
+      (testing "receipts on every criterion"
+        (criteria! (str "- [x] Parses input\n  - Receipt: `bb test` passed\n"
+                        "- [x] Prints output\n  - Receipt: commit abc123\n"))
+        (is (= :review (:status (:data (run tmp "review" "1")))))
+        (is (= :review (:status (:data (run tmp "set" "1" "status" "review")))))))))
 
 (deftest errors-reach-stderr-from-a-real-process
   (test-util/with-temp [tmp "canonical"]

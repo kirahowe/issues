@@ -11,6 +11,7 @@
             [clojure.string :as str]
             [issues.analyze :as analyze]
             [issues.config :as config]
+            [issues.criteria :as criteria]
             [issues.discover :as discover]
             [issues.issue :as issue]
             [issues.project :as project]
@@ -140,6 +141,8 @@
     "  edit <id>                     Open the details file in $EDITOR"
     "  set <id> <field> <value>      status, type, priority, title, tags, blocked-by, related"
     "  start | review | done | drop <id>"
+    "                                review needs every acceptance criterion checked"
+    "                                with a receipt; --force skips that"
     "  block <id> --on <n>           unblock <id> [--on <n>]"
     "  next                          Highest-priority unblocked ready issue"
     "  inbox                         Requests still to be fleshed out"
@@ -227,15 +230,35 @@
         path (edit-details! (find-or-fail scope (:id opts)))]
     (ok :message path (after-mutation! scope))))
 
+(defn- check-reviewable!
+  "Fail unless issue N's acceptance criteria are all checked off, each with
+  a receipt, so Kira gets the evidence along with the claim. `--force`
+  skips the check."
+  [scope n opts]
+  (when-not (:force opts)
+    (let [found (find-or-fail scope n)
+          gaps (criteria/gaps (store/read-details found))]
+      (when (seq gaps)
+        (fail (str (issue/ref-string (:id scope) n) " is not ready for review:\n"
+                   (str/join (map #(str "  " % "\n") gaps))
+                   "Check off each criterion in "
+                   (or (store/details-path found) (str "its details (`issues details " n "`)"))
+                   "\nand add a nested `- Receipt:` line with the evidence, or pass --force."))))))
+
 (defn- cmd-set [{:keys [opts]}]
-  (let [{:keys [id field value]} opts]
+  (let [{:keys [id field value]} opts
+        scope (resolve-scope opts)]
     (when (nil? value) (fail "set: usage is `issues set <id> <field> <value>`"))
-    (set-field! (resolve-scope opts) id field value)))
+    (when (and (= :status field) (= :review (:value (issue/coerce-field field value))))
+      (check-reviewable! scope id opts))
+    (set-field! scope id field value)))
 
 (defn- status-cmd
   [status]
   (fn [{:keys [opts]}]
-    (set-field! (resolve-scope opts) (:id opts) :status status)))
+    (let [scope (resolve-scope opts)]
+      (when (= "review" status) (check-reviewable! scope (:id opts) opts))
+      (set-field! scope (:id opts) :status status))))
 
 (defn- cmd-block [{:keys [opts]}]
   (let [scope (resolve-scope opts)
@@ -410,6 +433,9 @@
 (def ^:private id-arg
   {:args->opts [:id] :coerce {:id :int} :require [:id]})
 
+(def ^:private force-spec
+  {:force {:coerce :boolean :desc "Hand over for review without complete receipts"}})
+
 (def table
   [{:cmds ["help"] :fn cmd-help}
    {:cmds ["init"] :fn cmd-init :spec {:id {:ref "<id>"}}}
@@ -418,10 +444,10 @@
    (merge {:cmds ["show"] :fn cmd-show} id-arg)
    (merge {:cmds ["details"] :fn cmd-details} id-arg)
    (merge {:cmds ["edit"] :fn cmd-edit} id-arg)
-   {:cmds ["set"] :fn cmd-set :args->opts [:id :field :value]
+   {:cmds ["set"] :fn cmd-set :args->opts [:id :field :value] :spec force-spec
     :coerce {:id :int :field :keyword} :require [:id :field]}
    (merge {:cmds ["start"] :fn (status-cmd "in-progress")} id-arg)
-   (merge {:cmds ["review"] :fn (status-cmd "review")} id-arg)
+   (merge {:cmds ["review"] :fn (status-cmd "review") :spec force-spec} id-arg)
    (merge {:cmds ["done"] :fn (status-cmd "done")} id-arg)
    (merge {:cmds ["drop"] :fn (status-cmd "dropped")} id-arg)
    (merge {:cmds ["block"] :fn cmd-block :spec {:on {:coerce :int :require true}}} id-arg)

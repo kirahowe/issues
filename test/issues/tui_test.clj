@@ -70,7 +70,7 @@
     (testing "list"
       (let [lines (map plain (tui/render start 12 60))]
         (is (str/includes? (first lines) "2 awaiting review"))
-        (is (some #(str/includes? % "a#1  P1  feature") lines))
+        (is (some #(str/includes? % "a#1  P1  feature  -      2026-10-01  One") lines))
         (is (every? #(<= (count %) 60) lines))))
     (testing "detail"
       (let [lines (map plain (tui/render (first (keys-> start :enter)) 20 60))]
@@ -82,6 +82,13 @@
     (testing "empty"
       (is (some #(str/includes? % "Nothing awaiting review")
                 (map plain (tui/render (tui/init-state []) 12 60)))))))
+
+(deftest criteria-cell
+  (let [cell #(tui/criteria-cell {:details-text (str "## Acceptance criteria\n\n" %)})]
+    (is (= "-" (tui/criteria-cell {})))
+    (is (= "1/1" (cell "- [x] a\n  - Receipt: ok\n")))
+    (is (= "1/2!" (cell "- [x] a\n  - Receipt: ok\n- [x] b\n")))
+    (is (= "0/1!" (cell "- [ ] a\n")))))
 
 (deftest wrap
   (is (= ["aaa bbb" "ccc"] (tui/wrap "aaa bbb ccc" 10)))
