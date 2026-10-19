@@ -81,13 +81,17 @@ for dependencies. `next` is the actionable-work selector.
    then `issues start 12`. `next` only recommends; it does not claim work.
    Status commands do not enforce prerequisites or ownership. Match the
    actual state, and do not reset an already active issue unnecessarily.
+   A ready issue may be one the user sent back from review: read the last
+   `changes requested:` line in its details `## Log` and address it.
 4. **Verify and hand back.** Update the details with results, relevant checks,
    and remaining limitations, then run `issues doctor --json` for the target
    project. Resolve problems introduced by the work. Use `issues review 12`
    once implemented and verified. Keep issue changes with the code they
    describe when committing, following local VCS rules. Human acceptance is
    the normal boundary for `done`; use `issues done 12` when the user accepts
-   or explicitly requests closure. Use `drop` for intentionally abandoned
+   or explicitly requests closure. The user may give verdicts in `issues tui`,
+   which moves an issue to done, back to ready, or to dropped and logs any
+   note in its details. It needs a terminal; do not run it yourself. Use `drop` for intentionally abandoned
    work within the request, with a reason in the details.
 
 Metadata changes through `set` and lifecycle commands bump `updated` and

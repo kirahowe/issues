@@ -1,0 +1,11 @@
+{:id 13
+ :title "Terminal review inbox to approve, reject, or request changes"
+ :status :review
+ :type :feature
+ :priority :p2
+ :created "2026-10-19"
+ :updated "2026-10-19"
+ :tags #{"review" "tui"}
+ :blocked-by #{}
+ :related #{}
+ :details "13-terminal-review-inbox-to-approve-reject-or-request-changes.md"}

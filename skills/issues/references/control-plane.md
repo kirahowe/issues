@@ -10,7 +10,7 @@ Global flags being accepted does not mean every command honors them alike.
 | `ui` | Every project at or below `--dir`/cwd by default, nested ones included; `--local` or `--project` selects one; `--all` selects all and takes precedence |
 | `show`, `details`, `edit`, `add`, `set`, `start`, `review`, `done`, `drop`, `block`, `unblock`, `index` | One project, from `--project` or nearest `.issues/` above `--dir`/cwd; `--all` does not fan out mutations |
 | `init` | Exactly `--dir`/cwd; does not use `--project` to select a root |
-| `attention` | All by default; `--project` narrows unless `--all` is also present; `--dir` alone does not narrow |
+| `attention`, `tui` | All by default; `--project` narrows unless `--all` is also present; `--dir` alone does not narrow |
 | `projects`, `snapshot`, `analyze` | Always crawl configured roots; `--project` and `--dir` do not narrow |
 | `config` | Effective configuration and its source path |
 | `insights` | Previously saved analysis file, not a fresh scan |

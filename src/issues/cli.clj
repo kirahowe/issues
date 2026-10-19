@@ -18,6 +18,7 @@
             [issues.render :as render]
             [issues.snapshot :as snapshot]
             [issues.store :as store]
+            [issues.tui :as tui]
             [issues.ui :as ui]))
 
 ;;;; Results and errors
@@ -153,6 +154,7 @@
     "  projects                      Discovered projects, candidates and shadowed copies"
     "  status [--all]                Issue counts per status"
     "  attention [--project id]      What needs Kira (review) and Claude (inbox, ready)"
+    "  tui [--project id]            Review inbox: approve, request changes, or reject"
     "  snapshot [--with-details]     The whole cross-project data value (EDN by default)"
     "  config                        Effective config and where it came from"
     "  analyze [--kind k] [--threshold x] [--include-closed] [--no-save] [--file p]"
@@ -211,12 +213,18 @@
   []
   (first (remove str/blank? [(System/getenv "VISUAL") (System/getenv "EDITOR") "vi"])))
 
-(defn- cmd-edit [{:keys [opts]}]
-  (let [scope (resolve-scope opts)
-        found (store/ensure-details! (find-or-fail scope (:id opts)))
-        path (store/details-path found)]
+(defn- edit-details!
+  "Open ISSUE's details file in $VISUAL or $EDITOR, creating it first if
+  needed. Returns the path."
+  [issue]
+  (let [path (store/details-path (store/ensure-details! issue))]
     ;; sh expands a multi-word $EDITOR while "$1" keeps the path intact.
     (process/shell {:inherit true} "sh" "-c" (str (editor-command) " \"$1\"") "issues" path)
+    path))
+
+(defn- cmd-edit [{:keys [opts]}]
+  (let [scope (resolve-scope opts)
+        path (edit-details! (find-or-fail scope (:id opts)))]
     (ok :message path (after-mutation! scope))))
 
 (defn- cmd-set [{:keys [opts]}]
@@ -302,6 +310,18 @@
   ;; Cross-project by default; --project narrows to one.
   (let [{:keys [issues]} (scope-issues (if (:project opts) opts (assoc opts :all true)))]
     (ok :attention (query/attention issues))))
+
+(defn- cmd-tui [{:keys [opts]}]
+  ;; Cross-project like attention; --project narrows to one.
+  (let [opts (if (:project opts) opts (assoc opts :all true))
+        load #(:issues (scope-issues opts))]
+    (when-not (System/console)
+      (fail "tui needs an interactive terminal"))
+    (let [given (tui/run-inbox! load (fn [x]
+                                       (edit-details! x)
+                                       (store/write-index! (:dir x) (:project x)
+                                                           (store/read-all (:dir x)))))]
+      (ok :message (if (seq given) (str/join "\n" given) "no verdicts given")))))
 
 (defn- cmd-snapshot [{:keys [opts]}]
   (ok :snapshot (snapshot/build (load-cfg opts) {:with-details? (:with-details opts)})))
@@ -418,6 +438,7 @@
    {:cmds ["projects"] :fn cmd-projects}
    {:cmds ["status"] :fn cmd-status}
    {:cmds ["attention"] :fn cmd-attention}
+   {:cmds ["tui"] :fn cmd-tui}
    {:cmds ["snapshot"] :fn cmd-snapshot :spec {:with-details {:coerce :boolean}}}
    {:cmds ["config"] :fn cmd-config}
    {:cmds ["analyze"] :fn cmd-analyze

@@ -35,6 +35,7 @@ Across projects (crawls `~/code/projects` two levels deep unless configured):
 ```sh
 issues projects          # discovered projects, plus VCS roots that could become one
 issues attention         # what needs Kira (review) and Claude (inbox, ready)
+issues tui               # review inbox: approve, request changes, or reject
 issues list --all        # every open issue everywhere; --project <id> narrows
 issues doctor --all      # every problem; exit 2 when any is an error
 issues snapshot --json   # the whole cross-project data value
@@ -48,6 +49,17 @@ refresh. By default it shows every project at or below the current directory
 projects included, crawling as deep as the configured `:max-depth`.
 `--local` narrows to the one project at or above the directory, `--project
 <id>` picks a discovered project, and `--all` spans every configured root.
+
+`issues tui` opens a terminal inbox of everything in `review` across the
+configured roots, or one project's with `--project <id>`. Open an issue to
+read its details, then press `a` to approve it (`done`), `c` to request
+changes (back to `ready`, where `next` and the agent pick it up again) or
+`r` to reject it (`dropped`). Each verdict asks for a note: optional for
+approve and reject, required for changes. A note goes into the details
+file as a dated line under `## Log`, such as `- 2026-10-19 changes
+requested: cover the empty case`. `e` opens the details in `$EDITOR` when
+the note needs more than one line. On quitting, it prints the verdicts you
+gave.
 
 ## How it works
 
@@ -113,5 +125,6 @@ bb issues <args>    # run the CLI from source
 Namespaces, bottom up: `issue` (pure parse/render/validate), `store` (one
 `.issues/` dir), `project` (locate, init, read), `config`, `discover`
 (crawl), `snapshot` (everything as one value), `query`, `render`, `analyze`,
-`markdown` and `ui` (the local board), `cli`. This repo tracks its own
+`markdown` and `ui` (the local board), `review` and `tui` (the review
+inbox), `cli`. This repo tracks its own
 follow-ups in `.issues/`.

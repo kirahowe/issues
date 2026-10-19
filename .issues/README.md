@@ -29,6 +29,7 @@
 | ID | Title | Type | Priority |
 | --- | --- | --- | --- |
 | [7](7-simple-local-ui-to-see-issues-at-a-glance-from-any-project.md) | Simple local UI to see issues at a glance from any project dir | feature | P1 |
+| [13](13-terminal-review-inbox-to-approve-reject-or-request-changes.md) | Terminal review inbox to approve, reject, or request changes | feature | P2 |
 
 ## Done
 
