@@ -1,0 +1,11 @@
+{:id 15
+ :title "Let agents close issues without waiting on Kira's review"
+ :status :inbox
+ :type :feature
+ :priority :p1
+ :created "2026-10-24"
+ :updated "2026-10-24"
+ :tags #{}
+ :blocked-by #{}
+ :related #{}
+ :details "15-let-agents-close-issues-without-waiting-on-kira-s-review.md"}

@@ -9,6 +9,7 @@
 | --- | --- | --- | --- |
 | [1](1-one-off-migration-script-for-the-secrets-and-clj-llm-issues.edn) | One-off migration script for the secrets and clj-llm .issues dirs | chore | P1 |
 | [5](5-wire-the-issues-skill-into-the-configs-repo-and-a.edn) | Wire the issues skill into the configs repo and a SessionStart hook | chore | P1 |
+| [15](15-let-agents-close-issues-without-waiting-on-kira-s-review.md) | Let agents close issues without waiting on Kira's review | feature | P1 |
 | [2](2-renumber-command-to-resolve-duplicate-ids-after-a-workspace.edn) | renumber command to resolve duplicate ids after a workspace lands | feature | P2 |
 | [6](6-embedding-or-llm-backed-duplicate-and-bug-cluster-analyzers.edn) | Embedding or LLM-backed duplicate and bug-cluster analyzers via clj-llm | idea | P2 |
 | [3](3-rename-command-to-refresh-an-issue-s-slug-after-a-title.edn) | rename command to refresh an issue's slug after a title change | feature | P3 |
