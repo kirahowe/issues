@@ -1,0 +1,11 @@
+{:id 16
+ :title "Show an issue's status the same in every workspace"
+ :status :inbox
+ :type :feature
+ :priority :p1
+ :created "2026-10-25"
+ :updated "2026-10-25"
+ :tags #{}
+ :blocked-by #{}
+ :related #{}
+ :details "16-show-an-issue-s-status-the-same-in-every-workspace.md"}
