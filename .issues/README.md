@@ -25,6 +25,7 @@
 | [10](10-fix-cli-help-coercion-output-formats-and-error-reporting.md) | Fix CLI help, coercion, output formats, and error reporting | bug | P1 |
 | [11](11-constrain-details-paths-and-markdown-link-destinations.md) | Constrain details paths and Markdown link destinations | bug | P1 |
 | [12](12-prepare-the-public-alpha-release-and-jvm-library-contract.md) | Prepare the public alpha release and JVM library contract | chore | P1 |
+| [17](17-accept-a-value-of-digits-alone-in-issues-set.md) | Accept a value of digits alone in issues set | bug | P2 |
 
 ### Review
 

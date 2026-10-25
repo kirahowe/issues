@@ -1,0 +1,11 @@
+{:id 17
+ :title "Accept a value of digits alone in issues set"
+ :status :ready
+ :type :bug
+ :priority :p2
+ :created "2026-10-25"
+ :updated "2026-10-25"
+ :tags #{}
+ :blocked-by #{}
+ :related #{}
+ :details "17-accept-a-value-of-digits-alone-in-issues-set.md"}
