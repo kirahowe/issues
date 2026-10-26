@@ -307,3 +307,19 @@
                       (catch clojure.lang.ExceptionInfo e e))]
           (is (= 1 (:issues/exit (ex-data ex))))
           (is (str/includes? (ex-message ex) plain)))))))
+
+(deftest verdicts-from-the-command-line
+  (test-util/with-temp [tmp "canonical"]
+    (testing "approve closes the issue and logs the note"
+      (let [{:keys [exit data]} (run tmp "approve" "1" "--note" "looks right")]
+        (is (= 0 exit))
+        (is (= :done (:status data)))
+        (is (= "canon#1" (:ref data)))
+        (is (str/includes? (:data (run tmp "show" "1" "--edn")) "approved: looks right"))))
+    (testing "changes needs a note and goes back to ready"
+      (is (= 1 (:exit (run tmp "changes" "2"))))
+      (is (= :ready (:status (:data (run tmp "changes" "2" "--note" "cover the edge"))))))
+    (testing "reject drops without a note"
+      (is (= :dropped (:status (:data (run tmp "reject" "3"))))))
+    (testing "an unknown issue fails"
+      (is (= 1 (:exit (run tmp "approve" "99")))))))

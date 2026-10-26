@@ -17,6 +17,7 @@
             [issues.project :as project]
             [issues.query :as query]
             [issues.render :as render]
+            [issues.review :as review]
             [issues.snapshot :as snapshot]
             [issues.store :as store]
             [issues.tui :as tui]
@@ -143,6 +144,9 @@
     "  start | review | done | drop <id>"
     "                                review needs every acceptance criterion checked"
     "                                with a receipt; --force skips that"
+    "  approve | changes | reject <id> [--note text]"
+    "                                Kira's verdict, as in tui: done, back to ready"
+    "                                (a note is required), or dropped"
     "  block <id> --on <n>           unblock <id> [--on <n>]"
     "  next                          Highest-priority unblocked ready issue"
     "  inbox                         Requests still to be fleshed out"
@@ -259,6 +263,20 @@
     (let [scope (resolve-scope opts)]
       (when (= "review" status) (check-reviewable! scope (:id opts) opts))
       (set-field! scope (:id opts) :status status))))
+
+(defn- verdict-cmd
+  "A verdict from `issues.review`, as the TUI gives it, for callers that
+  are not a terminal: overview's cockpit, say. `--note` goes into the
+  details log."
+  [verdict]
+  (fn [{:keys [opts]}]
+    (let [scope (resolve-scope opts)
+          n (:id opts)
+          found (or (some #(when (= n (:id %)) %)
+                          (:issues (project/read-project scope)))
+                    (fail (str "no issue " n " in " (:id scope))))
+          updated (review/apply-verdict! found verdict (:note opts) (issue/today))]
+      (ok :updated (with-ref scope updated)))))
 
 (defn- cmd-block [{:keys [opts]}]
   (let [scope (resolve-scope opts)
@@ -436,6 +454,9 @@
 (def ^:private force-spec
   {:force {:coerce :boolean :desc "Hand over for review without complete receipts"}})
 
+(def ^:private note-spec
+  {:note {:ref "<text>" :desc "A line for the details log"}})
+
 (def table
   [{:cmds ["help"] :fn cmd-help}
    {:cmds ["init"] :fn cmd-init :spec {:id {:ref "<id>"}}}
@@ -450,6 +471,9 @@
    (merge {:cmds ["review"] :fn (status-cmd "review") :spec force-spec} id-arg)
    (merge {:cmds ["done"] :fn (status-cmd "done")} id-arg)
    (merge {:cmds ["drop"] :fn (status-cmd "dropped")} id-arg)
+   (merge {:cmds ["approve"] :fn (verdict-cmd :approve) :spec note-spec} id-arg)
+   (merge {:cmds ["changes"] :fn (verdict-cmd :request-changes) :spec note-spec} id-arg)
+   (merge {:cmds ["reject"] :fn (verdict-cmd :reject) :spec note-spec} id-arg)
    (merge {:cmds ["block"] :fn cmd-block :spec {:on {:coerce :int :require true}}} id-arg)
    (merge {:cmds ["unblock"] :fn cmd-unblock :spec {:on {:coerce :int}}} id-arg)
    {:cmds ["next"] :fn cmd-next}

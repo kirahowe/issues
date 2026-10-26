@@ -36,6 +36,7 @@ Across projects (crawls `~/code/projects` two levels deep unless configured):
 issues projects          # discovered projects, plus VCS roots that could become one
 issues attention         # what needs Kira (review) and Claude (inbox, ready)
 issues tui               # review inbox: approve, request changes, or reject
+issues approve 12 --note "ship it"   # the same verdicts, one at a time: approve, changes, reject
 issues list --all        # every open issue everywhere; --project <id> narrows
 issues doctor --all      # every problem; exit 2 when any is an error
 issues snapshot --json   # the whole cross-project data value
@@ -61,6 +62,12 @@ file as a dated line under `## Log`, such as `- 2026-10-19 changes
 requested: cover the empty case`. `e` opens the details in `$EDITOR` when
 the note needs more than one line. On quitting, it prints the verdicts you
 gave.
+
+`issues approve`, `issues changes` and `issues reject` give the same
+verdicts from the command line, for a program such as overview that has
+no terminal to hand over. Each takes the issue's id and `--note <text>`,
+which `changes` requires. Unlike the inbox, they accept an issue in any
+status.
 
 ## How it works
 
