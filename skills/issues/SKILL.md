@@ -86,6 +86,27 @@ for dependencies. `next` is the actionable-work selector.
    issue unnecessarily.
    A ready issue may be one the user sent back from review: read the last
    `changes requested:` line in its details `## Log` and address it.
+
+   `in-progress` means a session is working on the issue now. The user
+   watches those issues as the work underway, each with the sessions on
+   it, and has to look into any that nobody is on.
+
+   - Start an issue when you begin work on it, or when you hand it to a
+     subagent you are running. Do not start issues to mark a plan: after
+     filing a batch, leave the ones you are not working on yet in `inbox`
+     or `ready`.
+   - Do not move an issue to in-progress to record that part of it was
+     built earlier. With nobody on it, it is `ready`, and its Log says
+     how far it got.
+   - Do not leave an issue in progress once you are done with it for the
+     session. Use `issues review 12` when it is built and verified,
+     `issues block 12 --on 7` when it waits on another issue, and
+     otherwise `issues set 12 status ready` with a Log line on what is
+     left.
+   - Run the start as a plain command, `issues start 12` or
+     `issues --dir /path/to/project start 12`. overview reads it from the
+     session's transcript to show which session is on which issue, and a
+     shell variable or function around `issues` can hide it.
 4. **Verify and hand back.** Check off each acceptance criterion you met
    and put the evidence under it as one or more nested `- Receipt:` lines.
    A receipt is something the user can check without redoing the work: the
